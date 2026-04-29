@@ -2,3 +2,4 @@
 todo
 .vscode
 mydb.session.sql
+__pycache__/
