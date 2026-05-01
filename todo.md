@@ -1,0 +1,20 @@
+- [ x ] create venv
+- [ x ] install dependencies (use requirements.tt)
+- [ x ] create database
+- [ x ] create strucutre
+    - [ x ] env
+- [ x ] connect to db using asyncpg
+- [] TODO: Optimize connection 
+- [ x ] replace with sqlalchemy
+- [ x ] implement logging config
+- [ ] try to implement TDD
+- [ ] products api
+    - [ ] get
+    - [ ] get by id
+    - [ ] post 
+    - [ ] put
+- [ ] create orders api
+    - [ ] post
+    - [ ] get
+- [ ] implement uniform info logging
+- [ ] apply error logging
