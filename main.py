@@ -1,14 +1,19 @@
+import logging
 from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
 import uvicorn
 from app.logging_config import LOGGING_CONFIG
 
-from sqlalchemy import text, Engine, MetaData, Table, inspect
+from sqlalchemy import text, Engine, MetaData, Table, inspect, select
+from sqlalchemy.orm import Session
 
-import logging
+from fastapi.exceptions import RequestValidationError
+
 
 from app.database.connection_pool import engine
 from app.controller.router import router
+from app.entity import Base, Product, Order, OrderItem
+from app.errors.generic_error import CustomError, custom_error_response
 
 LOGGER = logging.getLogger(__name__)
 
@@ -39,33 +44,19 @@ app.include_router(router=router)
 metadata_object = MetaData()
 
 
+# @app.exception_handler(CustomError)
+# async def custom_error_handler()
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    LOGGER.info("type: %s", type(exc))
+    return custom_error_response(
+        422, "RequestValidationError", "error on validation", exc.errors()
+    )
+
+
 @app.get("/")
 async def root(request: Request):
-    # try:
-    engine1 = request.app.state.engine
-    # with engine.connect() as connection:
-    # result = connection.execute(text("SELECT 1"))
-    # LOGGER.info("🎉 Connection successful!")
-    # LOGGER.info(f"Result: {result.scalar()}")
-    # messages = Table(
-    #     "products", metadata_object, schema="avoria", autoload_with=engine1
-    # )
-
-    inspector = inspect(engine1)
-
-    # Target a specific schema
-    target_schema = "avoria"
-
-    # 3. Get table names for that schema
-    tables = inspector.(schema=target_schema)
-
-    print(f"Tables in {target_schema}:", tables)
-    # print(messages.columns.keys)
-
-    return ""
-    # except Exception as e:
-    #     LOGGER.error("❌ Connection failed!")
-    #     LOGGER.error(e)
+    return {"message": "Hello world!"}
 
 
 if __name__ == "__main__":

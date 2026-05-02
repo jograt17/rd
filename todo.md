@@ -9,7 +9,7 @@
 - [ x ] implement logging config
 - [ ] try to implement TDD
 - [ ] products api
-    - [ ] get
+    - [ x ] get
     - [ ] get by id
     - [ ] post 
     - [ ] put
