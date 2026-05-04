@@ -8,13 +8,14 @@
 - [ x ] replace with sqlalchemy
 - [ x ] implement logging config
 - [ ] try to implement TDD
-- [ ] products api
+- [ x ] products api
     - [ x ] get
-    - [ ] get by id
-    - [ ] post 
-    - [ ] put
+    - [ x ] get by id
+    - [ x ] post 
+    - [ x ] put
+- [ ] implement unit tests for products
 - [ ] create orders api
     - [ ] post
     - [ ] get
-- [ ] implement uniform info logging
-- [ ] apply error logging
+- [  ] implement uniform info logging
+- [ x ] apply error logging

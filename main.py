@@ -4,16 +4,14 @@ from contextlib import asynccontextmanager
 import uvicorn
 from app.logging_config import LOGGING_CONFIG
 
-from sqlalchemy import text, Engine, MetaData, Table, inspect, select
-from sqlalchemy.orm import Session
+from sqlalchemy import Engine, MetaData
 
 from fastapi.exceptions import RequestValidationError
 
 
 from app.database.connection_pool import engine
 from app.controller.router import router
-from app.entity import Base, Product, Order, OrderItem
-from app.errors.generic_error import CustomError, custom_error_response
+from app.errors.generic_error import custom_error_response
 
 LOGGER = logging.getLogger(__name__)
 
