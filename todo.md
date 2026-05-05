@@ -4,7 +4,7 @@
 - [ x ] create strucutre
     - [ x ] env
 - [ x ] connect to db using asyncpg
-- [] TODO: Optimize connection 
+- [ x ] TODO: Optimize connection 
 - [ x ] replace with sqlalchemy
 - [ x ] implement logging config
 - [ ] try to implement TDD
