@@ -13,9 +13,12 @@
     - [ x ] get by id
     - [ x ] post 
     - [ x ] put
-- [ ] implement unit tests for products
+- [ ] TESTING products
+    - [ x ] test product creation (happy path)
+    - [ x ] duplicate SKU rejection
 - [ ] create orders api
     - [ ] post
     - [ ] get
-- [  ] implement uniform info logging
+- [  ] implement unit tests for products
+- [ x ] implement uniform info logging
 - [ x ] apply error logging

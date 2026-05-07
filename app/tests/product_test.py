@@ -1,26 +1,22 @@
-# import pytest
-from fastapi.testclient import TestClient
-from app.main import app
+# tests/test_product.py
+def test_create_product(client, mock_repo):
+    mock_repo.get_product_by_sku.return_value = None
+    payload = {"name": "RK Keyboard", "sku": "KB-001", "price": 22.22, "stock_quantity": 1}
 
-# from app.model.product_model import ProductCreateModel
-# from app.service.product_service import ProductService
+    response = client.post("/api/products", json=payload)
+    print(response.content)
 
-client = TestClient(app=app)
-
-
-# @pytest.fixture
-# def product_create_mock_request():
-#     return {"name": "Bottle", "sku": "BTL-001", "price": 500.00, "stock_quantity": 5}
+    assert response.status_code == 201
+    assert "product" in response.json()["data"]
+    mock_repo.create_product.assert_called_once()
 
 
-def create_product_happy_path():
-    # mock_repo = mocker.Mock()
-    # mock_repo.create_product.result_value = 1
+def test_create_duplicate_sku_product(client, mock_repo):
+    mock_repo.get_product_by_sku.return_value = True
+    payload = {"name": "RK Keyboard", "sku": "KB-001", "price": 22.22, "stock_quantity": 1}
 
-    # service = ProductService(mock_repo)
+    response = client.post("/api/products", json=payload)
+    print(response.content)
 
-    # response = client.post("/products", json=product_create_mock_request())
-    # assert(result)
-    # assert response.status_code == 200
-    response = client.get("/")
-    assert response.status_code == 200
+    assert response.status_code == 422
+    assert response.json()["message"] == "SKU Exists"

@@ -1,10 +1,6 @@
 import os
 from sqlalchemy import URL, create_engine
 
-from dotenv import load_dotenv, find_dotenv
-
-load_dotenv(find_dotenv())
-
 url = URL.create(
     drivername="postgresql",
     username=os.getenv("DB_USER"),

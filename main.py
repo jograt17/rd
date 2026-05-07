@@ -1,8 +1,10 @@
 import logging
+import os
 from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
 import uvicorn
 from app.logging_config import LOGGING_CONFIG
+from dotenv import load_dotenv, find_dotenv
 
 from sqlalchemy import Engine, MetaData
 
@@ -16,23 +18,28 @@ from app.errors.generic_error import custom_error_response
 LOGGER = logging.getLogger(__name__)
 
 
+load_dotenv(find_dotenv())
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # --- Startup ---
     # Load ML models or initialize db connection pools
 
-    LOGGER.info("Test")
     LOGGER.info("Starting up...")
-    app.state.engine: Engine = engine
-    LOGGER.info(app.state.engine)
+    if os.getenv("TESTING") != "true":
+        app.state.engine = engine
+    else:
+        LOGGER.info("TESTING mode — skipping real DB connection")
     if app.state.engine is not None:
         LOGGER.info("Connection pool created successfully")
 
     yield
 
-    LOGGER.info("Closing DB Pool")
-    app.state.engine.dispose()
-    LOGGER.info("Engine is disposed")
+    if os.getenv("TESTING") != "true":
+        LOGGER.info("Closing DB Pool")
+        app.state.engine.dispose()
+        LOGGER.info("Engine is disposed")
     LOGGER.info("Shutdown complete.")
 
 
@@ -47,9 +54,7 @@ metadata_object = MetaData()
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
     LOGGER.info("type: %s", type(exc))
-    return custom_error_response(
-        422, "RequestValidationError", "error on validation", exc.errors()
-    )
+    return custom_error_response(422, "RequestValidationError", "error on validation", exc.errors())
 
 
 @app.get("/")
