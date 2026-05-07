@@ -1,7 +1,7 @@
 import logging
 from sqlalchemy import Engine, select, or_, update
 from sqlalchemy.orm import Session
-from app.entity import Product
+from app.entity.products import Product
 from datetime import datetime
 
 from app.model.product_model import ProductCreateModel, ProductPatchModel
@@ -56,6 +56,24 @@ class ProductRepository:
         with Session(self.engine) as session:
             result = session.scalars(statement=statement).first()
         return result
+
+    def get_products_by_ids(self, ids: list[int]):
+        try:
+            LOGGER.info("get_products_by_ids repo start")
+            statement = select(Product.id, Product.stock_quantity).filter(Product.id.in_(ids))
+            with Session(self.engine) as session:
+                rows = session.execute(statement).mappings().all()
+                # LOGGER.info("statement: %s", statement)
+                LOGGER.info("statement params: %s", statement.compile())
+                LOGGER.info("statement params: %s", statement.compile().params)
+                LOGGER.info("resutlt: %s", rows)
+
+            result = [dict(row) for row in rows]
+            return result
+        except Exception as e:
+            raise self._generic_db_error_bldr({"product_ids": ids}) from e
+        finally:
+            LOGGER.info("get_products_by_ids repo end")
 
     def create_product(self, product_data: ProductCreateModel):
         try:

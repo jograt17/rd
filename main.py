@@ -3,16 +3,16 @@ import os
 from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
 import uvicorn
-from app.logging_config import LOGGING_CONFIG
 from dotenv import load_dotenv, find_dotenv
 
-from sqlalchemy import Engine, MetaData
-
+from sqlalchemy import MetaData
 from fastapi.exceptions import RequestValidationError
 
 
+from app.logging_config import LOGGING_CONFIG
 from app.database.connection_pool import engine
-from app.controller.router import router
+from app.router.product_router import product_router
+from app.router.order_router import order_router
 from app.errors.generic_error import custom_error_response
 
 LOGGER = logging.getLogger(__name__)
@@ -45,8 +45,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 # app = FastAPI()
-app.include_router(router=router)
+app.include_router(router=product_router)
+app.include_router(router=order_router)
 metadata_object = MetaData()
+
+for r in app.routes:
+    LOGGER.info("method: %s path: %s", r.methods, r.path)
 
 
 # @app.exception_handler(CustomError)

@@ -10,10 +10,10 @@ from app.dependency import get_product_service
 
 LOGGER = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api")
+product_router = APIRouter(prefix="/api/products")
 
 
-@router.get("/products/{product_id}", response_model=CustomResponseModel)
+@product_router.get("/{product_id}", response_model=CustomResponseModel)
 async def get_product_by_id(
     product_id: int,
     product_service: ProductService = Depends(get_product_service),
@@ -31,8 +31,8 @@ async def get_product_by_id(
         LOGGER.info("get_product_by_id controller end")
 
 
-@router.get(
-    "/products",
+@product_router.get(
+    "/",
     response_model=CustomResponseModel,
 )
 async def get_products(
@@ -47,8 +47,8 @@ async def get_products(
     return CustomResponseModel(message="Product Retrieved", data=result)
 
 
-@router.post(
-    "/products",
+@product_router.post(
+    "/",
     status_code=status.HTTP_201_CREATED,
     response_model=CustomResponseModel,
 )
@@ -66,7 +66,7 @@ async def create_product(
         return custom_error_response(500, "ServerError", product_data)
 
 
-@router.patch("/products/{product_id}", response_model=CustomResponseModel)
+@product_router.patch("/{product_id}", response_model=CustomResponseModel)
 async def patch_product(
     product_id: int,
     product_data: ProductPatchModel,
