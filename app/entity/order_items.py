@@ -12,7 +12,7 @@ from decimal import Decimal
 from .base import Base
 
 
-class OrderItem(Base):
+class OrderItemEntity(Base):
     __tablename__ = "order_item"
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
@@ -26,8 +26,8 @@ class OrderItem(Base):
     unit_price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     subtotal: Mapped[Decimal] = mapped_column(Numeric(10, 2))
 
-    order: Mapped["Order"] = relationship(back_populates="order_items")
-    product: Mapped["Product"] = relationship(back_populates="order_items")
+    order: Mapped["OrderEntity"] = relationship(back_populates="order_items")
+    product: Mapped["ProductEntity"] = relationship(back_populates="order_items")
 
     __table_args__ = (
         CheckConstraint("quantity > 0", name="check_positive_quantity"),

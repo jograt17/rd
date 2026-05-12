@@ -1,6 +1,6 @@
 from .base import Base
-from .products import Product
-from .orders import Order, OrderStatus
-from .order_items import OrderItem
+from .products import ProductEntity
+from .orders import OrderEntity, OrderStatus
+from .order_items import OrderItemEntity
 
-__all__ = ["Base", "Product", "Order", "OrderStatus", "OrderItem"]
+__all__ = ["Base", "ProductEntity", "OrderEntity", "OrderStatus", "OrderItemEntity"]

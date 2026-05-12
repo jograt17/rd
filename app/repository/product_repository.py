@@ -1,10 +1,10 @@
 import logging
+from datetime import datetime
 from sqlalchemy import Engine, select, or_, update
 from sqlalchemy.orm import Session
-from app.entity.products import Product
-from datetime import datetime
 
-from app.model.product_model import ProductCreateModel, ProductPatchModel
+from app.entity.products import ProductEntity
+from app.model.product_model import ProductCreateModel, ProductPatchModel, ProductModel
 from app.errors.generic_error import CustomError
 
 LOGGER = logging.getLogger(__name__)
@@ -17,20 +17,21 @@ class ProductRepository:
     def get_products(self, is_active: bool | None, search: str | None):
         try:
             LOGGER.info("get_products start")
-            statement = select(Product)
-            if is_active:
-                statement = statement.filter(Product.is_active.is_(True)).ord
+            statement = select(ProductEntity)
+            if is_active is not None:
+                statement = statement.filter(ProductEntity.is_active.is_(is_active))
             if search:
                 # TODO: optimize search
                 statement = statement.filter(
                     or_(
-                        Product.name.ilike(f"%{search}%"),
-                        Product.sku.ilike(f"%{search}%"),
+                        ProductEntity.name.ilike(f"%{search}%"),
+                        ProductEntity.sku.ilike(f"%{search}%"),
                     )
                 )
-            statement = statement.order_by(Product.id.asc())
+            statement = statement.order_by(ProductEntity.id.asc())
             with Session(self.engine) as session:
-                result = session.scalars(statement=statement).all()
+                products = session.scalars(statement=statement).all()
+            result = [self._parse_to_pydantic(product) for product in products]
             return result
         except Exception as e:
             LOGGER.exception(e)
@@ -41,9 +42,10 @@ class ProductRepository:
     def get_product_by_id(self, product_id):
         try:
             LOGGER.info("get_product_by_id repo start")
-            statement = select(Product).filter(Product.id == product_id)
+            statement = select(ProductEntity).filter(ProductEntity.id == product_id)
             with Session(self.engine) as session:
-                result = session.scalars(statement=statement).first()
+                product = session.scalars(statement=statement).first()
+            result = self._parse_to_pydantic(product)
             return result
         except Exception as e:
             LOGGER.exception(e)
@@ -52,23 +54,19 @@ class ProductRepository:
             LOGGER.info("get_product_by_id repo end")
 
     def get_product_by_sku(self, sku):
-        statement = select(Product).filter(Product.sku == sku)
+        statement = select(ProductEntity).filter(ProductEntity.sku == sku)
         with Session(self.engine) as session:
-            result = session.scalars(statement=statement).first()
+            product = session.scalars(statement=statement).first()
+            result = self._parse_to_pydantic(product)
         return result
 
     def get_products_by_ids(self, ids: list[int]):
         try:
             LOGGER.info("get_products_by_ids repo start")
-            statement = select(Product.id, Product.stock_quantity).filter(Product.id.in_(ids))
+            statement = select(ProductEntity).filter(ProductEntity.id.in_(ids))
             with Session(self.engine) as session:
-                rows = session.execute(statement).mappings().all()
-                # LOGGER.info("statement: %s", statement)
-                LOGGER.info("statement params: %s", statement.compile())
-                LOGGER.info("statement params: %s", statement.compile().params)
-                LOGGER.info("resutlt: %s", rows)
-
-            result = [dict(row) for row in rows]
+                products = session.scalars(statement).all()
+            result = [self._parse_to_pydantic(product) for product in products]
             return result
         except Exception as e:
             raise self._generic_db_error_bldr({"product_ids": ids}) from e
@@ -78,7 +76,7 @@ class ProductRepository:
     def create_product(self, product_data: ProductCreateModel):
         try:
             LOGGER.info("create_product repo start")
-            product = Product(
+            product = ProductEntity(
                 name=product_data.name,
                 sku=product_data.sku,
                 price=product_data.price,
@@ -99,25 +97,28 @@ class ProductRepository:
             LOGGER.info("create_product repo end")
 
     def update_product(
-        self,
-        product_id: int,
-        product_data: ProductPatchModel,
+        self, product_id: int, product_data: ProductPatchModel, session: Session = None
     ):
         try:
             LOGGER.info("update_product Repository start")
             set_values = product_data.model_dump(exclude_none=True)
             set_values.update({"updated_at": datetime.now()})
             statement = (
-                update(Product)
-                .where(Product.id == product_id)
+                update(ProductEntity)
+                .where(ProductEntity.id == product_id)
                 .values(set_values)
-                .returning(Product.id)
+                .returning(ProductEntity.id)
             )
-            with Session(self.engine) as session:
+            if not session:
+                with Session(self.engine) as session:
+                    result = session.execute(statement=statement)
+                    updated_id = result.scalars().first()
+                    LOGGER.info("result: %s", updated_id)
+                    session.commit()
+            else:
                 result = session.execute(statement=statement)
                 updated_id = result.scalars().first()
                 LOGGER.info("result: %s", updated_id)
-                session.commit()
             return {"updated_id": updated_id}
         except Exception as e:
             LOGGER.exception(e)
@@ -131,4 +132,16 @@ class ProductRepository:
             "DatabaseError",
             "Database error occured",
             data,
+        )
+
+    def _parse_to_pydantic(self, product: ProductEntity):
+        return ProductModel(
+            id=product.id,
+            name=product.name,
+            sku=product.sku,
+            price=product.price,
+            stock_quantity=product.stock_quantity,
+            is_active=product.is_active,
+            created_at=product.created_at,
+            updated_at=product.updated_at,
         )

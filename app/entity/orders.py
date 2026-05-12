@@ -1,12 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import (
-    String,
-    Numeric,
-    DateTime,
-    BigInteger,
-    Identity,
-    Enum,
-)
+from sqlalchemy import String, Numeric, DateTime, BigInteger, Identity, Enum, text
 from datetime import datetime
 from decimal import Decimal
 import enum
@@ -15,12 +8,12 @@ from .base import Base
 
 
 class OrderStatus(enum.Enum):
-    PENDING = "pending"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
+    pending = "pending"
+    completed = "completed"
+    cancelled = "cancelled"
 
 
-class Order(Base):
+class OrderEntity(Base):
     __tablename__ = "orders"
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
@@ -29,14 +22,18 @@ class Order(Base):
     total_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     status: Mapped[OrderStatus] = mapped_column(
         Enum(
-            OrderStatus, name="order_status", create_constraint=False, native_enum=True
+            OrderStatus,
+            name="order_status",
+            create_constraint=False,
+            native_enum=True,
+            schema="avoria",
         ),
-        server_default="pending",
+        server_default=text("'pending'"),
         nullable=False,
     )
     created_at: Mapped[datetime] = mapped_column(DateTime)
     updated_at: Mapped[datetime] = mapped_column(DateTime)
 
-    order_items: Mapped[list["OrderItem"] | None] = relationship(back_populates="order")
+    order_items: Mapped[list["OrderItemEntity"] | None] = relationship(back_populates="order")
 
     __table_args__ = {"schema": "avoria"}

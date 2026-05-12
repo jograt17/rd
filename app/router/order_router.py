@@ -22,10 +22,22 @@ async def create_order(
     order_data: CreateOrderModel, order_service: OrderService = Depends(get_order_service)
 ):
     try:
-        result = order_service.create_product(order_data)
+        result = order_service.create_order(order_data)
         return {"message": "test", "data": result}
     except CustomError as e:
         return custom_error_response(e.code, e.name, e.message, e.payload)
     except Exception as e:
         LOGGER.exception(e)
         return custom_error_response(500, "ServerError", order_data)
+
+
+@order_router.get("/{order_id}")
+async def get_order_and(order_id: int, order_service: OrderService = Depends(get_order_service)):
+    try:
+        result = order_service.get_order_and_items(order_id)
+        return {"message": "test", "data": result}
+    except CustomError as e:
+        return custom_error_response(e.code, e.name, e.message, e.payload)
+    except Exception as e:
+        LOGGER.exception(e)
+        return custom_error_response(500, "ServerError", order_id)

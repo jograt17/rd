@@ -2,10 +2,8 @@ import logging
 from sqlalchemy import Engine
 
 from app.repository.product_repository import ProductRepository
-from app.entity.products import Product
-from app.model.product_model import ProductCreateModel
+from app.model.product_model import ProductCreateModel, ProductModel
 from app.errors.generic_error import CustomError
-from app.utils import utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -19,8 +17,8 @@ class ProductService:
         try:
             LOGGER.info("get_products start")
             result = self.product_repo.get_products(is_active=isActive, search=search)
-            dict_list = [utils.to_dict(row) for row in result]
-            return dict_list
+            # dict_list = [utils.to_dict(row) for row in result]
+            return result
         except Exception as e:
             LOGGER.exception(e)
         finally:
@@ -37,7 +35,7 @@ class ProductService:
                     "Product not found.",
                     {"product_id": product_id},
                 )
-            return utils.to_dict(result)
+            return result
         except CustomError as e:
             LOGGER.exception(e)
             raise e
@@ -86,7 +84,7 @@ class ProductService:
         finally:
             LOGGER.info("patch_product Service end")
 
-    def get_product(self, product_id) -> Product:
+    def get_product(self, product_id) -> ProductModel:
         return self.product_repo.get_product_by_id(product_id=product_id)
 
     def _sku_exists(self, sku) -> bool:

@@ -16,7 +16,7 @@ from decimal import Decimal
 from .base import Base
 
 
-class Product(Base):
+class ProductEntity(Base):
     __tablename__ = "products"
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
@@ -28,9 +28,7 @@ class Product(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime)
     updated_at: Mapped[datetime] = mapped_column(DateTime)
 
-    order_items: Mapped[list["OrderItem"] | None] = relationship(
-        back_populates="product"
-    )
+    order_items: Mapped[list["OrderItemEntity"] | None] = relationship(back_populates="product")
 
     __table_args__ = (
         CheckConstraint("price > 0", name="check_price_positive"),
