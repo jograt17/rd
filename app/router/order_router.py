@@ -23,7 +23,7 @@ async def create_order(
 ):
     try:
         result = order_service.create_order(order_data)
-        return {"message": "test", "data": result}
+        return CustomResponseModel(message="Order successfully created.", data=result)
     except CustomError as e:
         return custom_error_response(e.code, e.name, e.message, e.payload)
     except Exception as e:
@@ -35,7 +35,7 @@ async def create_order(
 async def get_order_and(order_id: int, order_service: OrderService = Depends(get_order_service)):
     try:
         result = order_service.get_order_and_items(order_id)
-        return {"message": "test", "data": result}
+        return CustomResponseModel(message="Order successfully retrieved.", data=result)
     except CustomError as e:
         return custom_error_response(e.code, e.name, e.message, e.payload)
     except Exception as e:

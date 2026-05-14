@@ -4,6 +4,7 @@ from app.service.product_service import ProductService
 from app.repository.order_repository import OrderRepository
 from app.repository.order_item_repository import OrderItemRepository
 from app.service.order_service import OrderService
+from app.repository.discount_repository import DiscountRepository
 
 
 def get_engine(request: Request):
@@ -26,15 +27,21 @@ def get_order_repository(engine=Depends(get_engine)):
     return OrderRepository(engine=engine)
 
 
+def get_discount_repository(engine=Depends(get_engine)):
+    return DiscountRepository(engine=engine)
+
+
 def get_order_service(
     engine=Depends(get_engine),
     order_repo=Depends(get_order_repository),
     product_repo=Depends(get_product_repository),
     order_item_repo=Depends(get_order_item_repository),
+    discount_repo=Depends(get_discount_repository),
 ):
     return OrderService(
         engine=engine,
         order_repo=order_repo,
         product_repo=product_repo,
         order_item_repo=order_item_repo,
+        discount_repo=discount_repo,
     )

@@ -26,7 +26,9 @@ async def get_product_by_id(
         return custom_error_response(e.code, e.name, e.message, e.payload)
     except Exception as e:
         LOGGER.exception(e)
-        return custom_error_response(500, "ServerError", product_id)
+        return custom_error_response(
+            500, "ServerError", "Error occured", {"product_id": product_id}
+        )
     finally:
         LOGGER.info("get_product_by_id controller end")
 
@@ -40,11 +42,17 @@ async def get_products(
     search: str | None = None,
     product_service: ProductService = Depends(get_product_service),
 ):
-    # TODO: error handling
     # LOGGER.info("is_active: %s, search string: %s", is_active, search)
-
-    result = product_service.get_products(isActive=is_active, search=search)
-    return CustomResponseModel(message="Product Retrieved", data=result)
+    try:
+        result = product_service.get_products(isActive=is_active, search=search)
+        return CustomResponseModel(message="Product Retrieved", data=result)
+    except CustomError as e:
+        return custom_error_response(e.code, e.name, e.message, e.payload)
+    except Exception as e:
+        LOGGER.exception(e)
+        return custom_error_response(
+            500, "ServerError", "Error occured", {"isActive": is_active, "search": search}
+        )
 
 
 @product_router.post(
@@ -63,7 +71,7 @@ async def create_product(
         return custom_error_response(e.code, e.name, e.message, e.payload)
     except Exception as e:
         LOGGER.exception(e)
-        return custom_error_response(500, "ServerError", product_data)
+        return custom_error_response(500, "ServerError", "Error occured", product_data)
 
 
 @product_router.patch("/{product_id}", response_model=CustomResponseModel)
@@ -80,6 +88,6 @@ async def patch_product(
         return custom_error_response(e.code, e.name, e.message, e.payload)
     except Exception as e:
         LOGGER.exception(e)
-        return custom_error_response(500, "ServerError", product_data)
+        return custom_error_response(500, "ServerError", "Error occured", product_data)
     finally:
         LOGGER.info("patch_product controller end")

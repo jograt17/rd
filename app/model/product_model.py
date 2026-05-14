@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, ConfigDict
 from decimal import Decimal
 from datetime import datetime
 from typing import Optional
@@ -32,6 +32,7 @@ class ProductPatchModel(BaseModel):
 
 
 class ProductModel(BaseModel):
+    model_config = ConfigDict(from_attributes=True) or None
     id: int
     name: str
     sku: str

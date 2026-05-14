@@ -13,3 +13,11 @@ class OrderItemCreateModel(BaseModel):
 class OrderItemModel(OrderItemCreateModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
+
+
+class OrderItemsSubtotal(BaseModel):
+    product_id: int
+    unit_price: Decimal
+    quantity: int
+    subtotal: Decimal
+    projected_quantity: int

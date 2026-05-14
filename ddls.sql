@@ -28,3 +28,8 @@ CREATE TABLE order_item(
     unit_price DECIMAL(10, 2),
     subtotal DECIMAL(10, 2)
 );
+--alter orders table for discounts
+ALTER TABLE orders
+ADD COLUMN discount_code VARCHAR(50),
+    ADD COLUMN discount_amount DECIMAL(10, 2) DEFAULT 0 NOT NULL,
+    ADD COLUMN final_amount DECIMAL(10, 2);

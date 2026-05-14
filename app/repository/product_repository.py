@@ -31,7 +31,11 @@ class ProductRepository:
             statement = statement.order_by(ProductEntity.id.asc())
             with Session(self.engine) as session:
                 products = session.scalars(statement=statement).all()
-            result = [self._parse_to_pydantic(product) for product in products]
+            result = (
+                []
+                if not products
+                else [ProductModel.model_validate(product) for product in products]
+            )
             return result
         except Exception as e:
             LOGGER.exception(e)
@@ -45,7 +49,7 @@ class ProductRepository:
             statement = select(ProductEntity).filter(ProductEntity.id == product_id)
             with Session(self.engine) as session:
                 product = session.scalars(statement=statement).first()
-            result = self._parse_to_pydantic(product)
+            result = None if not product else ProductModel.model_validate(product)
             return result
         except Exception as e:
             LOGGER.exception(e)
@@ -57,7 +61,7 @@ class ProductRepository:
         statement = select(ProductEntity).filter(ProductEntity.sku == sku)
         with Session(self.engine) as session:
             product = session.scalars(statement=statement).first()
-            result = self._parse_to_pydantic(product)
+            result = None if not product else ProductModel.model_validate(product)
         return result
 
     def get_products_by_ids(self, ids: list[int]):
@@ -66,7 +70,11 @@ class ProductRepository:
             statement = select(ProductEntity).filter(ProductEntity.id.in_(ids))
             with Session(self.engine) as session:
                 products = session.scalars(statement).all()
-            result = [self._parse_to_pydantic(product) for product in products]
+            result = (
+                []
+                if not products
+                else [ProductModel.model_validate(product) for product in products]
+            )
             return result
         except Exception as e:
             raise self._generic_db_error_bldr({"product_ids": ids}) from e
@@ -132,16 +140,4 @@ class ProductRepository:
             "DatabaseError",
             "Database error occured",
             data,
-        )
-
-    def _parse_to_pydantic(self, product: ProductEntity):
-        return ProductModel(
-            id=product.id,
-            name=product.name,
-            sku=product.sku,
-            price=product.price,
-            stock_quantity=product.stock_quantity,
-            is_active=product.is_active,
-            created_at=product.created_at,
-            updated_at=product.updated_at,
         )

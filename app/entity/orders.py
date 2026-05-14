@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Numeric, DateTime, BigInteger, Identity, Enum, text
+from sqlalchemy import String, Numeric, DateTime, BigInteger, Identity, Enum, text, ForeignKey
 from datetime import datetime
 from decimal import Decimal
 import enum
@@ -33,7 +33,13 @@ class OrderEntity(Base):
     )
     created_at: Mapped[datetime] = mapped_column(DateTime)
     updated_at: Mapped[datetime] = mapped_column(DateTime)
+    discount_id: Mapped[int | None] = mapped_column(
+        ForeignKey("avoria.discounts.id", ondelete="RESTRICT"), nullable=True
+    )
+    discount_amount: Mapped[Decimal | None] = mapped_column(default=0)
+    final_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2))
 
     order_items: Mapped[list["OrderItemEntity"] | None] = relationship(back_populates="order")
+    discount: Mapped["DiscountEntity | None"] = relationship(back_populates="order")
 
-    __table_args__ = {"schema": "avoria"}
+    __table_args__ = ({"schema": "avoria"},)

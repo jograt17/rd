@@ -17,10 +17,10 @@ class OrderItemEntity(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
     order_id: Mapped[int] = mapped_column(
-        ForeignKey("avoria.orders.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("avoria.orders.id", ondelete="RESTRICT"), nullable=False
     )
     product_id: Mapped[int] = mapped_column(
-        ForeignKey("avoria.products.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("avoria.products.id", ondelete="RESTRICT"), nullable=False
     )
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     unit_price: Mapped[Decimal] = mapped_column(Numeric(10, 2))

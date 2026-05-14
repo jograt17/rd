@@ -13,12 +13,18 @@
     - [ x ] get by id
     - [ x ] post 
     - [ x ] put
-- [ ] TESTING products
+- [ x ] TESTING products
     - [ x ] test product creation (happy path)
     - [ x ] duplicate SKU rejection
-- [ ] create orders api
-    - [ ] post
-    - [ ] get
-- [  ] implement unit tests for products
+- [ x ] create orders api
+    - [ x ] post
+    - [ x ] get
+- [ x ] adaptation requirement
+    - [ x ] WELCOME10 - 10% off the order total
+    - [ x ] FREESHIP - no price change but the code must be stored in the order
+- [ ] TESTING orders
+    - [ ] Order creation with valid stocks
+    - [ ] order rejection with stock is sufficient
+    - [ ] Discount logic with valid and invalid codes
 - [ x ] implement uniform info logging
 - [ x ] apply error logging
