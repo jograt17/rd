@@ -12,9 +12,9 @@ LOGGER = logging.getLogger(__name__)
 order_router = APIRouter(prefix="/api/orders")
 
 
-@order_router.get("/")
-async def get_order():
-    return {"helloword": "test"}
+# @order_router.get("/")
+# async def get_order():
+#     return {"helloword": "test"}
 
 
 @order_router.post("/", status_code=status.HTTP_201_CREATED, response_model=CustomResponseModel)
@@ -41,3 +41,15 @@ async def get_order_and(order_id: int, order_service: OrderService = Depends(get
     except Exception as e:
         LOGGER.exception(e)
         return custom_error_response(500, "ServerError", order_id)
+
+
+@order_router.get("/", response_model=CustomResponseModel)
+async def get_orders(order_service: OrderService = Depends(get_order_service)):
+    try:
+        result = order_service.get_orders()
+        return CustomResponseModel(message="Orders successfully retrieved.", data=result)
+    except CustomError as e:
+        return custom_error_response(e.code, e.name, e.message, e.payload)
+    except Exception as e:
+        LOGGER.exception(e)
+        return custom_error_response(500, "ServerError", "Error occured.")

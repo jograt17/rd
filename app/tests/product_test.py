@@ -26,15 +26,15 @@ def test_create_duplicate_sku_product(client, mock_repo):
     assert response.json()["message"] == "SKU Exists"
 
 
-valid_stock = ProductModel(
-    id=1,
-    name="test_product_name",
-    sku="TST_PRD_001",
-    price=22.22,
-    is_active=True,
-    created_at=datetime.now(),
-    updated_at=datetime.now(),
-)
+# valid_stock = ProductModel(
+#     id=1,
+#     name="test_product_name",
+#     sku="TST_PRD_001",
+#     price=22.22,
+#     is_active=True,
+#     created_at=datetime.now(),
+#     updated_at=datetime.now(),
+# )
 
 
 # def test_create_order_valid_stock(client, mock_repo):

@@ -2,8 +2,14 @@ import logging
 from sqlalchemy import Engine
 
 from app.repository.product_repository import ProductRepository
-from app.model.product_model import ProductCreateModel, ProductModel
-from app.errors.generic_error import CustomError
+from app.model.product_model import ProductCreateModel, ProductModel, ProductPatchModel
+from app.errors.generic_error import (
+    CustomError,
+    NotFoundError,
+    CustomValidationError,
+    DatabaseError,
+    ServiceError,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -19,8 +25,11 @@ class ProductService:
             result = self.product_repo.get_products(is_active=isActive, search=search)
             # dict_list = [utils.to_dict(row) for row in result]
             return result
+        except DatabaseError as e:
+            raise e
         except Exception as e:
             LOGGER.exception(e)
+            raise ServiceError("Service Error", {"isActive": isActive, "search": search}) from e
         finally:
             LOGGER.info("get_products end")
 
@@ -29,58 +38,70 @@ class ProductService:
             LOGGER.info("get_product_by_id Service start")
             result = self.product_repo.get_product_by_id(product_id=product_id)
             if not result:
-                raise CustomError(
-                    404,
-                    "NotFound",
+                raise NotFoundError(
                     "Product not found.",
                     {"product_id": product_id},
                 )
             return result
+        except DatabaseError as e:
+            raise e
         except CustomError as e:
-            LOGGER.exception(e)
+            LOGGER.warning(e)
             raise e
         except Exception as e:
             LOGGER.exception(e)
-            raise e
+            raise ServiceError("Service Error", {"product_id": product_id}) from e
         finally:
             LOGGER.info("get_product_by_id Service end")
 
     def create_product(self, product_data: ProductCreateModel):
-        # validate product_data
-        ## check if product id exists
-        if self._sku_exists(sku=product_data.sku):
-            raise CustomError(
-                422,
-                "RequestValidationError",
-                "SKU Exists",
-                product_data.model_dump(mode="json"),
-            )
-        result_id = self.product_repo.create_product(product_data)
+        try:
+            LOGGER.info("create_product Service start")
+            # validate product_data
+            ## check if product id exists
+            if self._sku_exists(sku=product_data.sku):
+                raise CustomValidationError(
+                    "SKU Exists.",
+                    product_data.model_dump(mode="json"),
+                )
+            result_id = self.product_repo.create_product(product_data)
 
-        LOGGER.info("result_id: %s", result_id)
-        return {"product": result_id}
+            LOGGER.info("result_id: %s", result_id)
+            return {"product": result_id}
+        except DatabaseError as e:
+            raise e
+        except CustomError as e:
+            LOGGER.warning(e)
+            raise e
+        except Exception as e:
+            LOGGER.exception(e)
+            raise ServiceError("Service Error", product_data.model_dump(mode="json")) from e
+        finally:
+            LOGGER.info("create_product Service end")
 
-    def patch_product(self, product_id: int, product_data):
+    def patch_product(self, product_id: int, product_data: ProductPatchModel):
         try:
             LOGGER.info("patch_product Service start")
             # check if product exists
             existing_product = self.get_product(product_id=product_id)
             if not existing_product:
-                raise CustomError(
-                    404,
-                    "NotFound",
-                    "Product does not exist",
+                raise NotFoundError(
+                    "Product does not exist.",
                     product_data.model_dump(mode="json"),
                 )
 
             result = self.product_repo.update_product(product_id, product_data)
             return result
+        except DatabaseError as e:
+            raise e
         except CustomError as e:
-            LOGGER.exception(e)
+            LOGGER.warning(e)
             raise e
         except Exception as e:
             LOGGER.exception(e)
-            raise e
+            raise ServiceError(
+                "Service Error", {"id": id, "product_data": product_data.model_dump(mode="json")}
+            ) from e
         finally:
             LOGGER.info("patch_product Service end")
 

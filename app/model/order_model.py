@@ -44,3 +44,18 @@ class OrderModel(BaseModel):
     discount_amount: Optional[Decimal] = 0
     discount: Optional[DiscountModel] = None
     final_amount: Decimal
+
+
+class OrdersModel(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    customer_name: str
+    customer_email: str
+    total_amount: Decimal
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    # discounts
+    discount_id: Optional[int] = None
+    discount_amount: Optional[Decimal] = 0
+    final_amount: Decimal

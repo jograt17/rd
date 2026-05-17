@@ -11,7 +11,13 @@ from app.model.order_model import CreateOrderModel, Items, OrderInfoModel
 from app.model.order_item_model import OrderItemCreateModel, OrderItemsSubtotal
 from app.model.product_model import ProductModel, ProductPatchModel
 from app.model.discount_model import DiscountModel
-from app.errors.generic_error import CustomError
+from app.errors.generic_error import (
+    DatabaseError,
+    NotFoundError,
+    CustomValidationError,
+    ServiceError,
+    CustomError,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -31,10 +37,23 @@ class OrderService:
         self.order_item_repo = order_item_repo
         self.discount_repo = discount_repo
 
+    def get_orders(self):
+        try:
+            LOGGER.info("get_orders service end")
+            orders = self.order_repo.get_orders()
+            return orders
+        except DatabaseError as e:
+            raise e
+        except Exception as e:
+            LOGGER.exception(e)
+            raise ServiceError("Service Error") from e
+        finally:
+            LOGGER.info("get_orders service end")
+
     def create_order(self, order_data: CreateOrderModel):
 
         try:
-            # check if there are repeating ids, combine if there is
+            # check if there are repeating ids, combine if there are
             itm_id_and_qty_agg = {}
             for item in order_data.items:
                 if item.product_id not in itm_id_and_qty_agg:
@@ -88,12 +107,14 @@ class OrderService:
                 "order_item_ids": order_item_ids,
                 "updated_product_ids": updated_product_ids,
             }
+        except DatabaseError as e:
+            raise e
         except CustomError as e:
-            LOGGER.exception(e)
+            LOGGER.warning(e)
             raise e
         except Exception as e:
             LOGGER.exception(e)
-            raise e
+            raise ServiceError("Service Error", order_data.model_dump(mode="json")) from e
         finally:
             LOGGER.info("get_products end")
 
@@ -102,14 +123,16 @@ class OrderService:
             LOGGER.info("get_order_and_items service start")
             result = self.order_repo.get_order_and_items(order_id)
             if not result:
-                raise CustomError(404, "NotFound", "Order not found", {"order_id": order_id})
+                raise NotFoundError("Order not found.", {"order_id": order_id})
             return result
+        except DatabaseError as e:
+            raise e
         except CustomError as e:
-            LOGGER.exception(e)
+            LOGGER.warning(e)
             raise e
         except Exception as e:
             LOGGER.exception(e)
-            raise e
+            raise ServiceError("Service Error", {"order_id": order_id}) from e
         finally:
             LOGGER.info("get_order_and_items service end")
 
@@ -120,9 +143,7 @@ class OrderService:
         stock_items_ids = [item.id for item in stock_items]
         inexisting_ids = [id for id in order_item_ids if id not in stock_items_ids]
         if inexisting_ids:
-            raise CustomError(
-                404, "NotFound", f"Product id(s) {inexisting_ids} not found", order_items
-            )
+            raise NotFoundError(f"Product id(s) {inexisting_ids} not found.", order_items)
         # check if stocks are available
         insufficient_items = []
         for stock_item in stock_items:
@@ -131,10 +152,8 @@ class OrderService:
                 insufficient_items.append(stock_item.id)
         if insufficient_items:
             # TODO: Update return SKU instead of ids
-            raise CustomError(
-                422,
-                "ValidationError",
-                f"Insufficient stock for product(s) {', '.join(map(str, insufficient_items))}",
+            raise CustomValidationError(
+                f"Insufficient stock for product(s) {', '.join(map(str, insufficient_items))}.",
                 order_items,
             )
             # combined_items.get(stock_item)
@@ -161,7 +180,7 @@ class OrderService:
     def _get_and_validate_discount_code(self, order_data: CreateOrderModel):
         discount = self.discount_repo.get_discount(order_data.discount_code)
         if not discount:
-            raise CustomError(404, "NotFound", "Discount code not found", order_data)
+            raise NotFoundError("Discount code not found.", order_data)
         return discount
 
     def _apply_discount(

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.entity.products import ProductEntity
 from app.model.product_model import ProductCreateModel, ProductPatchModel, ProductModel
-from app.errors.generic_error import CustomError
+from app.errors.generic_error import DatabaseError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ class ProductRepository:
 
     def get_products(self, is_active: bool | None, search: str | None):
         try:
-            LOGGER.info("get_products start")
+            LOGGER.info("get_products repo start")
             statement = select(ProductEntity)
             if is_active is not None:
                 statement = statement.filter(ProductEntity.is_active.is_(is_active))
@@ -39,9 +39,9 @@ class ProductRepository:
             return result
         except Exception as e:
             LOGGER.exception(e)
-            raise self._generic_db_error_bldr({"is_active": is_active, "search": search}) from e
+            raise DatabaseError({"is_active": is_active, "search": search}) from e
         finally:
-            LOGGER.info("get_products end")
+            LOGGER.info("get_products repo end")
 
     def get_product_by_id(self, product_id):
         try:
@@ -53,16 +53,23 @@ class ProductRepository:
             return result
         except Exception as e:
             LOGGER.exception(e)
-            raise self._generic_db_error_bldr({"product_id": product_id}) from e
+            raise DatabaseError({"product_id": product_id}) from e
         finally:
             LOGGER.info("get_product_by_id repo end")
 
     def get_product_by_sku(self, sku):
-        statement = select(ProductEntity).filter(ProductEntity.sku == sku)
-        with Session(self.engine) as session:
-            product = session.scalars(statement=statement).first()
-            result = None if not product else ProductModel.model_validate(product)
-        return result
+        try:
+            LOGGER.info("get_product_by_sku repo start")
+            statement = select(ProductEntity).filter(ProductEntity.sku == sku)
+            with Session(self.engine) as session:
+                product = session.scalars(statement=statement).first()
+                result = None if not product else ProductModel.model_validate(product)
+            return result
+        except Exception as e:
+            LOGGER.exception(e)
+            raise DatabaseError({"sku": sku}) from e
+        finally:
+            LOGGER.info("get_product_by_sku repo end")
 
     def get_products_by_ids(self, ids: list[int]):
         try:
@@ -77,7 +84,8 @@ class ProductRepository:
             )
             return result
         except Exception as e:
-            raise self._generic_db_error_bldr({"product_ids": ids}) from e
+            LOGGER.exception(e)
+            raise DatabaseError({"product_ids": ids}) from e
         finally:
             LOGGER.info("get_products_by_ids repo end")
 
@@ -100,7 +108,7 @@ class ProductRepository:
             return product.id
         except Exception as e:
             LOGGER.exception(e)
-            raise self._generic_db_error_bldr(product_data.model_dump(mode="json")) from e
+            raise DatabaseError(product_data.model_dump(mode="json")) from e
         finally:
             LOGGER.info("create_product repo end")
 
@@ -108,7 +116,7 @@ class ProductRepository:
         self, product_id: int, product_data: ProductPatchModel, session: Session = None
     ):
         try:
-            LOGGER.info("update_product Repository start")
+            LOGGER.info("update_product repo start")
             set_values = product_data.model_dump(exclude_none=True)
             set_values.update({"updated_at": datetime.now()})
             statement = (
@@ -130,14 +138,6 @@ class ProductRepository:
             return {"updated_id": updated_id}
         except Exception as e:
             LOGGER.exception(e)
-            raise self._generic_db_error_bldr(product_data.model_dump(mode="json")) from e
+            raise DatabaseError(product_data.model_dump(mode="json")) from e
         finally:
-            LOGGER.info("update_product Repository end")
-
-    def _generic_db_error_bldr(self, data: any):
-        return CustomError(
-            500,
-            "DatabaseError",
-            "Database error occured",
-            data,
-        )
+            LOGGER.info("update_product repo end")
